@@ -1,0 +1,5 @@
+secrets:
+  - id: private-key
+    paths:
+      - "**/lib/python3.12/site-packages/google/auth/crypt/__pycache__/_python_rsa.cpython-312.pyc"
+    statement: Is a false positive

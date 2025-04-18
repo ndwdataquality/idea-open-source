@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Trims trailing whitespace
+      - id: trailing-whitespace
+        types_or: [python]
+      # Makes sure files end in a newline and only a newline
+      - id: end-of-file-fixer
+        types_or: [python]
+      # Prevent commit to main branch
+      - id: no-commit-to-branch
+      - id: check-toml
+      - id: check-yaml
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.8.6
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [--fix]
+      # Run the formatter.
+      - id: ruff-format
