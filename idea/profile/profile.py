@@ -2,11 +2,16 @@ import datetime as dt
 
 import pandas as pd
 
-from idea.constants import PROFILE_COLUMNS
+from idea.constants import MINIMUM_WEEKS_INPUT_FOR_PROFILE, PROFILE_COLUMNS
 from idea.profile import util as idea_util
 
 
-def calculate_profile(df: pd.DataFrame, start: dt.datetime, end: dt.datetime) -> pd.DataFrame:
+def calculate_profile(
+    df: pd.DataFrame,
+    start: dt.datetime,
+    end: dt.datetime,
+    minimum_weeks_required: int = MINIMUM_WEEKS_INPUT_FOR_PROFILE,
+) -> pd.DataFrame:
     """
     Calculate a profile based on Floating Car Data (FCD) between a given start and end time.
 
@@ -31,6 +36,8 @@ def calculate_profile(df: pd.DataFrame, start: dt.datetime, end: dt.datetime) ->
         The start datetime for the profile generation.
     end : datetime.datetime
         The end datetime for the profile generation.
+    minimum_weeks_required : int
+        The minimum number of weeks required for a profile generation.
 
     Returns
     -------
@@ -74,7 +81,7 @@ def calculate_profile(df: pd.DataFrame, start: dt.datetime, end: dt.datetime) ->
     df = idea_util.filter_max_consecutive_60(df)
     df = idea_util.add_periods(df)
     df = idea_util.aggregate_hour_of_week(df)
-    df = idea_util.filter_profile_low_availability(df, PROFILE_COLUMNS)
+    df = idea_util.filter_profile_low_availability(df, PROFILE_COLUMNS, minimum_weeks_required)
     df = idea_util.replace_nans_with_none(df)
     df = idea_util.map_day_of_week_to_name(df)
     idea_util.does_profile_has_enough_data(df)

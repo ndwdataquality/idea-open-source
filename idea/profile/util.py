@@ -13,7 +13,6 @@ from idea.constants import (
     MAX_ACCEPTABLE_CONSECUTIVE_ZEROS_Q95,
     MAX_CONSECUTIVE_ZEROS_OR_ONES_Q95_REPLACEMENT_VALUE,
     MINIMUM_HOURS_NO_TRAFFIC_FOR_PROFILE,
-    MINIMUM_WEEKS_INPUT_FOR_PROFILE,
     THRESHOLD_OF_USEFUL_DATA_PROFILE,
 )
 from idea.exceptions import IDEAError
@@ -142,9 +141,7 @@ def aggregate_hour_of_week(df: pd.DataFrame) -> pd.DataFrame:
     return df.round(1)
 
 
-def filter_profile_low_availability(
-    df: pd.DataFrame, columns: list, n: int = MINIMUM_WEEKS_INPUT_FOR_PROFILE
-) -> pd.DataFrame:
+def filter_profile_low_availability(df: pd.DataFrame, columns: list, n: int) -> pd.DataFrame:
     """Filter data with low availability by setting the values to nan."""
     df_copy = df.copy()
     mask = df_copy["number_of_hours"] < n
