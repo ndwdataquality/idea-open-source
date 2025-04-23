@@ -103,7 +103,7 @@ jobs:
 #          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
       - task: Bash@3
         displayName: 'Sync naar GitHub met anonieme auteurs'
-        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/task/93134-sync-github'))
         inputs:
           targetType: inline
           script: |
