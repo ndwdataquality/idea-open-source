@@ -336,8 +336,7 @@ def set_segment_closure_status(df: pd.DataFrame) -> pd.DataFrame:
 
     Parameters
     ----------
-    df : pd.DataFrame
-        DataFrame with the running mean column.
+    df : pd.DataFrame with the running mean column.
 
     Returns
     -------
@@ -348,6 +347,6 @@ def set_segment_closure_status(df: pd.DataFrame) -> pd.DataFrame:
         df.running_mean < OPEN_LIMT,
         df.running_mean > CLOSED_LIMIT,
     ]
-    selections = ["OPEN", "CLOSED"]
-    df["SEGMENT_CLOSURE_STATUS"] = np.select(conditions, selections, default="UNDETERMINED")
+    selections = ["open", "closed"]
+    df["segment_closure_status"] = np.select(conditions, selections, default="undetermined")
     return df

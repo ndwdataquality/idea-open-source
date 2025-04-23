@@ -1,7 +1,8 @@
 # IDEA 2.0 – Intelligent Data Exchange Alliance
 
 **Repository:** `idea-open-source`  
-This repository contains Python code for generating profiles based on Floating Car Data (FCD). These profiles can be used for validating roadworks in real-time systems.
+This repository contains Python code for generating profiles from Floating Car Data (FCD),
+as well as validating roadwork data using FCD during roadwork periods.
 
 ---
 
@@ -21,6 +22,7 @@ examples/
 ├──  calculate_minutes_no_coverage.py # Example for calculating the minutes without coverage
 ├──  calculate_profile.py # Example for creating a profile
 ├──  validate_roadwork.py # Example for validating a single segment roadwork
+├──  visualization_example_cases.ipynb # Graphs of 3 example cases
 ```
 
 ---
@@ -107,7 +109,7 @@ The core function `calculate_profile` resides in `idea/profile/`. It takes Float
 #### Example
 
 ```python
-from idea.profile import calculate_profile
+from idea.profile.profile import calculate_profile
 
 profile = calculate_profile(fcd_data)
 ```
@@ -131,28 +133,9 @@ poetry run pytest
 
 ## 🚀 Roadmap / TODOs
 
-- [ ] Implement visualization of the output.
 - [ ] Add more unit tests
-- [ ] Improve documentation
-- [ ] Add type hints and docstrings
 - [ ] Optional: Package for PyPI or other open source tool
 - [ ] Optional: Add api layer
----
-
-## Complete Script (Planned)
-
-- Script to:
-  - Generate profiles for a list of segments from CSV input
-  - Loop through FCD data minute-by-minute and apply the validation algorithm
-  - Export output and plots (notebook/graph)
-
----
-
-## Documentation (To Do)
-
-- Specify valid input formats for FCD
-- Define all expected output fields
-- Document how to interpret prediction results
 
 ---
 
