@@ -102,7 +102,7 @@ jobs:
         inputs:
           script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
       - task: Bash@3
-        displayName: 'Create anonymous GitHub mirror'
+        displayName: 'GitHub anonymous mirror'
         condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/task/main'))
         inputs:
           targetType: inline
