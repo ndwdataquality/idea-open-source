@@ -48,7 +48,7 @@ variables:
 resources:
   azureKeyVaults:
     - name: kv
-      vault: $(vaultName)
+      vault: mlops-prod
       secrets:
         - GithubToken
 
