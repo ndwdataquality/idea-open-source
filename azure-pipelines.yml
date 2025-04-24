@@ -102,7 +102,7 @@ jobs:
 #        inputs:
 #          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
       - task: Bash@3
-        displayName: 'Sync naar GitHub met anonieme auteurs'
+        displayName: 'Create GitHub mirror'
         condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/task/93134-sync-github'))
         inputs:
           targetType: inline
@@ -110,13 +110,12 @@ jobs:
             git config --global user.name $(GITHUB_NAME)
             git config --global user.email $(GITHUB_EMAIL)
 
-            echo "Check of github remote al bestaat"
-            git remote | grep github || git remote add github https://$(GITHUB_TOKEN)@github.com/$(GITHUB_USERNAME)/idea-open-source.git
-
-            echo "Checkout huidige branch"
+            git remote add github https://$(GITHUB_TOKEN)@github.com/$(GITHUB_USERNAME)/idea-open-source.git
             git checkout $(Build.SourceBranchName)
+            
+            git remote -v
+            export FILTER_BRANCH_SQUELCH_WARNING=1
 
-            echo "Anonimiseer commit geschiedenis"
             git filter-branch --env-filter '
               export GIT_AUTHOR_NAME=$(GITHUB_NAME)
               export GIT_AUTHOR_EMAIL=$(GITHUB_EMAIL)
@@ -124,5 +123,4 @@ jobs:
               export GIT_COMMITTER_EMAIL=$(GITHUB_EMAIL)
             ' -- --all
 
-            echo "Push branch naar GitHub"
             git push --force github HEAD:main
