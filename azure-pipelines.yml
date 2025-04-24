@@ -56,7 +56,7 @@ jobs:
           versionSpec: $(python.version)
       - task: AzureKeyVault@2
         inputs:
-          azureSubscription: 'mlops-keyvault-prod'  # Service connection name
+          azureSubscription: ''  # Service connection name
           KeyVaultName: $(vaultName)  # Use dynamic vault name
           SecretsFilter: 'GithubToken'
         name: FetchSecrets
