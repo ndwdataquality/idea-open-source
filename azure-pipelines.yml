@@ -116,5 +116,20 @@ jobs:
                 export GIT_COMMITTER_NAME='${GITHUB_NAME}';
                 export GIT_COMMITTER_EMAIL='${GITHUB_EMAIL}';
             " HEAD
-            git switch -c temp-push-branch
+            git switch -c main
             git push -u origin +main
+
+      #            git remote add github https://$(GITHUB_TOKEN)@github.com/$(GITHUB_USERNAME)/idea-open-source.git
+      #
+      #            export FILTER_BRANCH_SQUELCH_WARNING=1
+      #
+      #            git filter-branch --env-filter "
+      #            export GIT_AUTHOR_NAME='${GITHUB_NAME}';
+      #            export GIT_AUTHOR_EMAIL='${GITHUB_EMAIL}';
+      #            export GIT_COMMITTER_NAME='${GITHUB_NAME}';
+      #            export GIT_COMMITTER_EMAIL='${GITHUB_EMAIL}';
+      #            " -- --all
+      #
+      #            git switch -c temp-push-branch
+      #
+      #            git push --force github HEAD:refs/heads/main
