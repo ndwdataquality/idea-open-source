@@ -123,4 +123,4 @@ jobs:
               export GIT_COMMITTER_EMAIL=$(GITHUB_EMAIL)
             ' -- --all
 
-            git push --force github HEAD:refs/heads/main
+            git push --force github refs/heads/task/93134-sync-github:refs/heads/main
