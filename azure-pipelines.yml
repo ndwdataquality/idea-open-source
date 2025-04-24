@@ -41,10 +41,10 @@ variables:
     value: $(GithubToken)
 
   - name: vaultName
-    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}: 'mlops-prod'
-    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}: 'mlops-dev'
-
-
+    value:
+      ${{ if eq(variables['Build.SourceBranchName'], 'main') }}: 'mlops-prod'
+      ${{ else }}: 'mlops-dev'
+      
 resources:
   azureKeyVaults:
     - name: kv
