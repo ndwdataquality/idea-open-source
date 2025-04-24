@@ -42,7 +42,7 @@ variables:
 
   - name: vaultName
     value: ${{ if eq(variables.isMain, true) }}:'mlops-prod'
-           ${{ if ne(variables.isMain, true) }}'mlops-dev'
+           ${{ if ne(variables.isMain, true) }}:'mlops-dev'
 
 resources:
   azureKeyVaults:
