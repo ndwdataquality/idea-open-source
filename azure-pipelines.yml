@@ -7,12 +7,9 @@ trigger:
       - main
 
 variables:
-  - ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
-    - name: environment
-      value: 'prod'
-  - ${{ if ne(variables['Build.SourceBranchName'], 'main') }}:
-    - name: environment
-      value: 'dev'
+  - name: environment
+    value: ${{ if eq(variables['Build.SourceBranchName'], 'main') }}'prod'
+           ${{ if ne(variables['Build.SourceBranchName'], 'main') }}'dev'
 
   - name: python.version
     value: "3.12"
@@ -44,12 +41,9 @@ variables:
   - name: GITHUB_TOKEN
     value: $(GithubToken)
 
-  - ${{ if eq(variables['environment'], 'prod') }}:
-      - name: vaultName
-        value: 'mlops-prod'
-  - ${{ if ne(variables['environment'], 'prod') }}:
-      - name: vaultName
-        value: 'mlops-dev'
+  - name: vaultName
+    value: ${{ if eq(variables['environment'], 'prod') }}'mlops-prod'
+           ${{ if ne(variables['environment'], 'prod') }}'mlops-dev'
 
 resources:
   azureKeyVaults:
