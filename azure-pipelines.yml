@@ -123,4 +123,4 @@ jobs:
               export GIT_COMMITTER_EMAIL=$(GITHUB_EMAIL)
             ' -- --all
 
-            git push --force github HEAD:main
+            git push --force github HEAD:refs/heads/main
