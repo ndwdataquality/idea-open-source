@@ -54,7 +54,7 @@ variables:
 resources:
   azureKeyVaults:
     - name: kv
-      vault: vaultName
+      vault: $(vaultName)
       secrets:
         - GithubToken
 
