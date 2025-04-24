@@ -96,11 +96,11 @@ jobs:
         displayName: "Sonar analysis"
       - task: SonarQubePublish@7
         displayName: "Publish Sonar analysis results"
-      - task: CmdLine@2
-        displayName: Publish Artifact to Feed
-        condition: or(and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main')), and(succeeded(), eq(variables['Docker.ForcePush'], 'true')))
-        inputs:
-          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
+#      - task: CmdLine@2
+#        displayName: Publish Artifact to Feed
+#        condition: or(and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main')), and(succeeded(), eq(variables['Docker.ForcePush'], 'true')))
+#        inputs:
+#          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
       - task: Bash@3
         displayName: 'GitHub anonymous mirror'
         condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/task/main'))
