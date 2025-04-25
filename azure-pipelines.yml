@@ -56,7 +56,7 @@ jobs:
           versionSpec: $(python.version)
       - task: AzureKeyVault@2
         inputs:
-          azureSubscription: 'mlops-keyvault-prod'
+          azureSubscription: 'mlops-keyvault-cicd-prod'
           KeyVaultName: $(vaultName)
           SecretsFilter: 'GithubToken'
         name: FetchSecrets
