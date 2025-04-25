@@ -41,10 +41,7 @@ variables:
     value: $(GithubToken)
 
   - name: vaultName
-    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
-      value: 'mlops-prod'
-    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}:
-      value: 'mlops-dev'
+    value: 'mlops-prod'
 
 jobs:
   - job: Job_1
