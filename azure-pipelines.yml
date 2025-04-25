@@ -41,9 +41,8 @@ variables:
     value: $(GithubToken)
 
   - name: vaultName
-    value: 'mlops-prod'
-#    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}: 'mlops-prod'
-#    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}: 'mlops-dev'
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}: 'mlops-prod'
+    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}: 'mlops-dev'
 
 jobs:
   - job: Job_1
@@ -128,7 +127,7 @@ jobs:
 #          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
       - task: Bash@3
         displayName: 'GitHub anonymous mirror'
-        condition: and(succeeded(), ne(variables['environment'], 'prod'))
+        condition: and(succeeded(), eq(variables['environment'], 'prod'))
         inputs:
           targetType: inline
           script: |
