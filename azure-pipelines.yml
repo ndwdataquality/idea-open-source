@@ -5,13 +5,44 @@ trigger:
   branches:
     include:
       - main
+
 variables:
-  python.version: "3.12"
-  PIP_EXTRA_INDEX_URL: ""
-  POETRY_VERSION: 2.1.2
-  POETRY_HOME: "/opt/poetry"
-  POETRY_VIRTUALENVS_IN_PROJECT: true
-  PRE_COMMIT_HOME: $(Pipeline.Workspace)/pre-commit-cache
+  - name: isMain
+    value: ${{ in(variables['Build.SourceBranch'], 'refs/heads/main') }}
+
+  - name: python.version
+    value: "3.12"
+
+  - name: PIP_EXTRA_INDEX_URL
+    value: ""
+
+  - name: POETRY_VERSION
+    value: 2.1.2
+
+  - name: POETRY_HOME
+    value: "/opt/poetry"
+
+  - name: POETRY_VIRTUALENVS_IN_PROJECT
+    value: true
+
+  - name: PRE_COMMIT_HOME
+    value: $(Pipeline.Workspace)/pre-commit-cache
+
+  - name: GITHUB_USERNAME
+    value: ndwdataquality
+
+  - name: GITHUB_NAME
+    value: ndw
+
+  - name: GITHUB_EMAIL
+    value: 161337760+ndwdataquality@users.noreply.github.com
+
+  - name: GITHUB_TOKEN
+    value: $(GithubToken)
+
+  - name: vaultName
+    value: 'mlops-prod'
+
 jobs:
   - job: Job_1
     displayName: Build and Test
@@ -21,6 +52,13 @@ jobs:
         displayName: Use Python $(python.version)
         inputs:
           versionSpec: $(python.version)
+      - task: AzureKeyVault@2
+        inputs:
+          azureSubscription: 'mlops-keyvault-cicd-prod'
+          KeyVaultName: $(vaultName)
+          SecretsFilter: 'GithubToken'
+        name: FetchSecrets
+        condition: and(succeeded(), eq(variables['environment'], 'prod'))
       - task: PipAuthenticate@1
         displayName: "Pip Authenticate"
         inputs:
@@ -87,3 +125,20 @@ jobs:
 #        condition: or(and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main')), and(succeeded(), eq(variables['Docker.ForcePush'], 'true')))
 #        inputs:
 #          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
+      - task: Bash@3
+        displayName: 'GitHub anonymous mirror'
+        condition: and(succeeded(), eq(variables['environment'], 'prod'))
+        inputs:
+          targetType: inline
+          script: |
+            # Don't use these commands on your local git repo!
+            # The pipeline uses a working directory. So its ok if the history gets mangled.
+            git remote set-url origin https://$(GITHUB_TOKEN)@github.com/$(GITHUB_USERNAME)/idea-open-source.git
+            git filter-branch -f --env-filter "
+                export GIT_AUTHOR_NAME='${GITHUB_NAME}';
+                export GIT_AUTHOR_EMAIL='${GITHUB_EMAIL}';
+                export GIT_COMMITTER_NAME='${GITHUB_NAME}';
+                export GIT_COMMITTER_EMAIL='${GITHUB_EMAIL}';
+            " HEAD
+            git switch -c main
+            git push -u origin +main
