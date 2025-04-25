@@ -4,6 +4,12 @@
 This repository contains Python code for generating profiles from Floating Car Data (FCD),
 as well as validating roadwork data using FCD during roadwork periods.
 
+
+> **Note:** This is a _read-only mirror_ of the original repository.  
+> Pull requests submitted via GitHub will not be reviewed or merged.
+
+All changes are managed in an external source and automatically synchronized to this repository.  
+
 ---
 
 ## 📁 Project Structure
