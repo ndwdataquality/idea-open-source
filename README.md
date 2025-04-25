@@ -70,42 +70,6 @@ Install the Poetry environment:
 poetry install
 ```
 ---
-
-### pre-commit
-
-Pre-commit is a tool that runs checks before each commit to ensure that the code is formatted correctly and that there are no errors.
-The feedback is in the form of a list of errors that are shown in the terminal or log file.
-The pre-commit can also be run manually by running the pre-commit command in the terminal.
-
-The following commands are used to install pre-commit and configure it to run the checks before each commit.
-It will add a "hook" to .git/hooks/pre-commit that will run the checks before each commit.
-To configure pre-commit, run the following command in the root of the project.
-It needs .pre-commit-config.yaml file in the root of the project, containing the configuration for the pre-commit checks.
-
-to install without activating project virtual environment:
-
-```bash
-poetry run pre-commit install --install-hooks
-```
-
-or  when  virtual environment is activated:
-
-```bash
-pre-commit install --install-hooks
-```
-
-Then you can run the following command to run the pre-commit checks:
-important to configure first time
-
-```bash
-pre-commit
-```
-
-When committing, the pre-commit checks will be run automatically.
-If ruff linter formats a file , the file will moved to changed while other files are in staged then you have to stage the changed file and commit again
-.
-If pre-commit checks fail, you have to fix the issues and commit again.
-
 ## 🧠 Functionality
 
 ### Profile Generation
@@ -119,7 +83,6 @@ from idea.profile.profile import calculate_profile
 
 profile = calculate_profile(fcd_data)
 ```
----
 
 ### Roadwork Validation
 
@@ -134,14 +97,6 @@ Running tests
 ```bash
 poetry run pytest
 ```
-
----
-
-## 🚀 Roadmap / TODOs
-
-- [ ] Add more unit tests
-- [ ] Optional: Package for PyPI or other open source tool
-- [ ] Optional: Add api layer
 
 ---
 
