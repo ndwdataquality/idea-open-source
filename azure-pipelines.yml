@@ -58,7 +58,7 @@ jobs:
           KeyVaultName: $(vaultName)
           SecretsFilter: 'GithubToken'
         name: FetchSecrets
-        condition: and(succeeded(), eq(variables.isMain, true))
+        condition: and(succeeded(), nevariables.isMain, true))
       - task: PipAuthenticate@1
         displayName: "Pip Authenticate"
         inputs:
