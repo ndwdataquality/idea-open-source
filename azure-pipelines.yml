@@ -58,7 +58,7 @@ jobs:
           KeyVaultName: $(vaultName)
           SecretsFilter: 'GithubToken'
         name: FetchSecrets
-        condition: and(succeeded(), eq(variables['environment'], 'prod'))
+        condition: and(succeeded(), eq(variables.isMain, true))
       - task: PipAuthenticate@1
         displayName: "Pip Authenticate"
         inputs:
@@ -127,7 +127,7 @@ jobs:
 #          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
       - task: Bash@3
         displayName: 'GitHub anonymous mirror'
-        condition: and(succeeded(), eq(variables['environment'], 'prod'))
+        condition: and(succeeded(), eq(variables.isMain, true))
         inputs:
           targetType: inline
           script: |
