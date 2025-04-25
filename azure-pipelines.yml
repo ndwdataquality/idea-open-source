@@ -128,7 +128,7 @@ jobs:
 #          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
       - task: Bash@3
         displayName: 'GitHub anonymous mirror'
-        condition: and(succeeded(), neq(variables['environment'], 'prod'))
+        condition: and(succeeded(), ne(variables['environment'], 'prod'))
         inputs:
           targetType: inline
           script: |
