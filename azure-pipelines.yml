@@ -45,13 +45,6 @@ variables:
 #    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}: 'mlops-prod'
 #    ${{ if ne(variables['Build.SourceBranchName'], 'main') }}: 'mlops-dev'
 
-resources:
-  azureKeyVaults:
-    - name: kv
-      vault: $(vaultName)
-      secrets:
-        - GithubToken
-
 jobs:
   - job: Job_1
     displayName: Build and Test
@@ -65,6 +58,7 @@ jobs:
         inputs:
           azureSubscription: 'mlops-keyvault-prod'  # Service connection name
           KeyVaultName: $(vaultName)  # Use dynamic vault name
+          SecretsFilter: 'GithubToken'
         name: FetchSecrets
       - task: PipAuthenticate@1
         displayName: "Pip Authenticate"
