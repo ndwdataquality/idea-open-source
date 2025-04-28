@@ -1,0 +1,64 @@
+# Docker
+.env
+
+# MacOS
+.DS_Store
+
+# python
+dbsettings.json
+devsettings.py
+testscript.py
+__pycache__
+*.pyc
+startscript.py
+test.py
+
+# pycharm
+.idea
+*.iml
+
+# vscode
+.vscode
+*.code-workspace
+
+# output files
+*.log
+*.prof
+
+# jupyter
+.ipynb_checkpoints
+
+# settings
+settings.json
+
+# Python venv
+venv
+.venv/
+.python-version
+env/
+
+# Hypothesis cache
+.hypothesis
+
+.mypy_cache
+.coverage
+coverage.xml
+.coveragerc
+
+# Env-file
+*.env
+environment.yml
+
+# ndwlibrary package build files
+build/
+dist/
+ndwdqlibrary.egg-info/
+
+.pytest_cache/
+
+# Folder for local testscripts
+idea/testscripts/
+debug.py
+
+# azure storage emulator
+__azurite_db_table__.json

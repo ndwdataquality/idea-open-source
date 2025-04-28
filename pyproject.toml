@@ -1,0 +1,56 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "idea"
+version = "0.0.1"
+description = "Shared IDEA Library"
+authors = ["Nationaal Dataportaal Wegverkeer Datakwaliteit (NDW)"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12"
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12.1"
+"pandas" = "2.2.3"
+"pytest" = "8.3.5"
+"pytest-timeout" = "2.3.1"
+"pytest-cov" = "6.1.0"
+"parameterized" = "0.9.0"
+"singleton-decorator" = "1.0.0"
+"pre-commit" = "4.2.0"
+"plotly" = "6.0.1"
+
+[tool.ruff]
+src = ["idea"]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 100
+max-line-length = 100
+
+[tool.ruff.lint]
+select = ["D",   # docstrings
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "UP",  # pyupgrade
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I",  # isort
+    "W505"] # w505 checks for docstring comments lines to long
+# makes docstrings not mandatory and less strict:
+ignore = ["D417", "D202", "D205", "D101", "D102", "D103", "D100", "D401", "D104"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 100

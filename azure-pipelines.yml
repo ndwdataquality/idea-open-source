@@ -1,0 +1,144 @@
+pool:
+  name: Azure Pipelines
+  vmImage: ubuntu-latest
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  - name: isMain
+    value: ${{ in(variables['Build.SourceBranch'], 'refs/heads/main') }}
+
+  - name: python.version
+    value: "3.12"
+
+  - name: PIP_EXTRA_INDEX_URL
+    value: ""
+
+  - name: POETRY_VERSION
+    value: 2.1.2
+
+  - name: POETRY_HOME
+    value: "/opt/poetry"
+
+  - name: POETRY_VIRTUALENVS_IN_PROJECT
+    value: true
+
+  - name: PRE_COMMIT_HOME
+    value: $(Pipeline.Workspace)/pre-commit-cache
+
+  - name: GITHUB_USERNAME
+    value: ndwdataquality
+
+  - name: GITHUB_NAME
+    value: ndw
+
+  - name: GITHUB_EMAIL
+    value: 161337760+ndwdataquality@users.noreply.github.com
+
+  - name: GITHUB_TOKEN
+    value: $(GithubToken)
+
+  - name: vaultName
+    value: 'mlops-prod'
+
+jobs:
+  - job: Job_1
+    displayName: Build and Test
+    steps:
+      - checkout: self
+      - task: UsePythonVersion@0
+        displayName: Use Python $(python.version)
+        inputs:
+          versionSpec: $(python.version)
+      - task: AzureKeyVault@2
+        inputs:
+          azureSubscription: 'mlops-keyvault-cicd-prod'
+          KeyVaultName: $(vaultName)
+          SecretsFilter: 'GithubToken'
+        name: FetchSecrets
+        condition: and(succeeded(), eq(variables.isMain, true))
+      - task: PipAuthenticate@1
+        displayName: "Pip Authenticate"
+        inputs:
+          artifactFeeds: "data-quality"
+          onlyAddExtraIndex: true
+      - script: |
+          pipx install poetry==$POETRY_VERSION --include-deps
+          export PATH="$POETRY_HOME/bin:$PATH"  # Add Poetry to PATH
+          poetry --version  # Verify Poetry is installed
+      - script: "poetry install --no-ansi --no-interaction"
+        displayName: "Install pyproject packages"
+      - script: 'echo "##vso[task.setvariable variable=appVersion;isoutput=true]"$(poetry version -s)'
+        name: passOutput
+        displayName: "Save application version"
+      - script: "poetry build"
+        displayName: "Create artifact with Poetry"
+      - script: "poetry run pip install --upgrade pip wheel twine"
+        displayName: "Install and or upgrade pip, wheel and twine"
+      - task: Cache@2.198.0
+        inputs:
+          key: pre-commit | "$(Agent.OS)" | .pre-commit-config.yaml | "$(python.version)"
+          path: $(PRE_COMMIT_HOME)
+          cacheHitVar: CACHE_RESTORED
+      - script: "poetry run pre-commit install --install-hooks"
+        displayName: "Install pre-commit hooks"
+        condition: ne(variables.CACHE_RESTORED, 'true')
+      - script: "poetry run pre-commit run --all-files"
+        displayName: "Ruff check"
+      - task: SonarQubePrepare@7
+        displayName: "Prepare Sonar analysis"
+        inputs:
+          SonarQube: Sonar
+          scannerMode: CLI
+      - task: CmdLine@2
+        displayName: Run Testscripts using Pytest
+        inputs:
+          script: "poetry run pytest --cov-branch --cov-report=xml --cov=idea idea --junitxml=junit/test-results.xml"
+      - task: PublishTestResults@2
+        displayName: Publish Test Results
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFiles: /home/vsts/work/1/s/junit/test-results.xml
+          mergeTestResults: true
+          testRunTitle: Python $(python.version)
+      - task: trivy@1
+        displayName: Trivy scan local project
+        inputs:
+          docker: false
+          path: .
+          severities: CRITICAL,HIGH
+          options: >
+            --db-repository public.ecr.aws/aquasecurity/trivy-db
+            --ignorefile .trivyignore.yaml
+      - task: TwineAuthenticate@1
+        displayName: "Twine Authenticate "
+        inputs:
+          artifactFeed: data-quality
+      - task: SonarQubeAnalyze@7
+        displayName: "Sonar analysis"
+      - task: SonarQubePublish@7
+        displayName: "Publish Sonar analysis results"
+#      - task: CmdLine@2
+#        displayName: Publish Artifact to Feed
+#        condition: or(and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main')), and(succeeded(), eq(variables['Docker.ForcePush'], 'true')))
+#        inputs:
+#          script: poetry run twine upload -r data-quality --config-file $(PYPIRC_PATH) dist/*.whl
+      - task: Bash@3
+        displayName: 'GitHub anonymous mirror'
+        condition: and(succeeded(), eq(variables.isMain, true))
+        inputs:
+          targetType: inline
+          script: |
+            # Don't use these commands on your local git repo!
+            # The pipeline uses a working directory. So its ok if the history gets mangled.
+            git remote set-url origin https://$(GITHUB_TOKEN)@github.com/$(GITHUB_USERNAME)/idea-open-source.git
+            git filter-branch -f --env-filter "
+                export GIT_AUTHOR_NAME='${GITHUB_NAME}';
+                export GIT_AUTHOR_EMAIL='${GITHUB_EMAIL}';
+                export GIT_COMMITTER_NAME='${GITHUB_NAME}';
+                export GIT_COMMITTER_EMAIL='${GITHUB_EMAIL}';
+            " HEAD
+            git switch -c main
+            git push -u origin +main
