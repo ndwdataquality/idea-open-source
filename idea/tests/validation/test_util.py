@@ -1,10 +1,13 @@
+import math
 import unittest
 
 import numpy as np
 import pandas as pd
 
+from idea.constants import K_MAX, K_START, MINIMUM_PROFILE_VALUE
 from idea.exceptions import IDEAError
 from idea.validation.util import (
+    apply_momentum,
     calculate_minutes_no_coverage,
     calculate_running_mean,
     determine_coverage_profile_value,
@@ -13,6 +16,7 @@ from idea.validation.util import (
     sanitize_cov_values,
     set_segment_closure_status,
     update_counter,
+    update_k,
     update_no_coverage_counters,
 )
 
@@ -109,3 +113,113 @@ class TestCoverageFunctions(unittest.TestCase):
         result = set_segment_closure_status(df)
         expected = ["open", "closed", "undetermined"]
         self.assertListEqual(result["segment_closure_status"].tolist(), expected)
+
+
+class TestUpdateK(unittest.TestCase):
+    def test_resets_to_k_start_when_no_vehicles(self):
+        # coverage == 0: always resets regardless of other inputs
+        self.assertAlmostEqual(update_k(5.0, 0, 3, 2, 5.0), K_START)
+
+    def test_doubles_when_event_within_decay_window(self):
+        # current_minutes_no_low == 0 (event now), previous <= decay_window
+        self.assertAlmostEqual(update_k(2.0, 3, 0, 4, 5.0), 4.0)
+
+    def test_unchanged_when_event_outside_decay_window(self):
+        # current_minutes_no_low == 0 but previous > decay_window
+        self.assertAlmostEqual(update_k(2.0, 3, 0, 6, 5.0), 2.0)
+
+    def test_unchanged_when_no_current_event(self):
+        # current_minutes_no_low > 0: neither reset nor boost
+        self.assertAlmostEqual(update_k(2.0, 3, 2, 1, 5.0), 2.0)
+
+    def test_capped_at_k_max(self):
+        # k * 2 would exceed K_MAX
+        self.assertAlmostEqual(update_k(K_MAX, 3, 0, 2, 5.0), K_MAX)
+
+    def test_no_vehicles_takes_priority_over_event(self):
+        # coverage == 0 always resets even if current_minutes_no_low == 0
+        self.assertAlmostEqual(update_k(5.0, 0, 0, 2, 5.0), K_START)
+
+
+class TestApplyMomentum(unittest.TestCase):
+    def test_no_momentum_when_high_coverage(self):
+        # coverage >= COV_HIGH (6): momentum conditions not met, values unchanged
+        running_mean, k = apply_momentum(
+            coverage=7.0,
+            coverage_profile_value=8.0,
+            current_minutes_no_low=0,
+            previous_minutes_no_low=0,
+            profile_cov_ones=10.0,
+            k=2.0,
+            running_mean=0.8,
+        )
+        self.assertAlmostEqual(running_mean, 0.8)
+        self.assertAlmostEqual(k, 2.0)
+
+    def test_no_momentum_when_sudden_drop(self):
+        # (coverage_profile_value - coverage) > COV_DROP_LIMIT (8): momentum not applied
+        running_mean, k = apply_momentum(
+            coverage=1.0,
+            coverage_profile_value=10.0,  # 10 - 1 = 9 > 8
+            current_minutes_no_low=0,
+            previous_minutes_no_low=0,
+            profile_cov_ones=10.0,
+            k=2.0,
+            running_mean=0.8,
+        )
+        self.assertAlmostEqual(running_mean, 0.8)
+        self.assertAlmostEqual(k, 2.0)
+
+    def test_alpha_scales_running_mean(self):
+        # Verify the running mean is multiplied by exp(-k * echo)
+        # profile_cov_ones=10 -> decay_window=5, current_minutes_no_low=0 -> echo=1.0
+        # coverage=2 (no vehicles -> k stays at 2.0), alpha=exp(-2.0)
+        running_mean, _ = apply_momentum(
+            coverage=2.0,
+            coverage_profile_value=5.0,
+            current_minutes_no_low=0,
+            previous_minutes_no_low=6,  # outside window, k unchanged
+            profile_cov_ones=10.0,
+            k=2.0,
+            running_mean=0.8,
+        )
+        expected = 0.8 * math.exp(-2.0 * 1.0)
+        self.assertAlmostEqual(running_mean, expected)
+
+    def test_echo_zero_when_minutes_exceed_decay_window(self):
+        # current_minutes_no_low >= decay_window: echo clamps to 0, alpha = 1, no scaling
+        # profile_cov_ones=10 -> decay_window=5; current_minutes_no_low=10 >= 5
+        running_mean, _ = apply_momentum(
+            coverage=2.0,
+            coverage_profile_value=5.0,
+            current_minutes_no_low=10,
+            previous_minutes_no_low=9,
+            profile_cov_ones=10.0,
+            k=2.0,
+            running_mean=0.8,
+        )
+        self.assertAlmostEqual(running_mean, 0.8)
+
+    def test_nan_profile_cov_ones_uses_minimum_profile_value(self):
+        # NaN profile_cov_ones is clamped to MINIMUM_PROFILE_VALUE (5)
+        # decay_window = 0.5 * 5 = 2.5, current_minutes_no_low=0 -> echo=1.0
+        running_mean_nan, k_nan = apply_momentum(
+            coverage=2.0,
+            coverage_profile_value=5.0,
+            current_minutes_no_low=0,
+            previous_minutes_no_low=6,
+            profile_cov_ones=np.nan,
+            k=2.0,
+            running_mean=0.8,
+        )
+        running_mean_min, k_min = apply_momentum(
+            coverage=2.0,
+            coverage_profile_value=5.0,
+            current_minutes_no_low=0,
+            previous_minutes_no_low=6,
+            profile_cov_ones=float(MINIMUM_PROFILE_VALUE),
+            k=2.0,
+            running_mean=0.8,
+        )
+        self.assertAlmostEqual(running_mean_nan, running_mean_min)
+        self.assertAlmostEqual(k_nan, k_min)

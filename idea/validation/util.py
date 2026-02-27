@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -6,9 +8,12 @@ from idea.constants import (
     COV_DROP_LIMIT,
     COV_HIGH,
     COV_THRESHOLD_ZEROS_OR_ONE_VALUE,
+    DECAY_PARAM,
+    K_MAX,
+    K_START,
     MAX_PROFILE_VALUE,
     MINIMUM_PROFILE_VALUE,
-    OPEN_LIMT,
+    OPEN_LIMIT,
 )
 from idea.exceptions import IDEAError
 
@@ -279,9 +284,120 @@ def calculate_running_mean_based_on_conditions(
     return prev_running_mean  # No change
 
 
+def update_k(
+    k: float,
+    coverage: float,
+    current_minutes_no_low: float,
+    previous_minutes_no_low: float,
+    decay_window: float,
+) -> float:
+    """
+    Update the momentum decay parameter k for the current minute.
+
+    Three cases:
+      - No vehicles (coverage == 0): k resets to K_START.
+      - Event now and previous event within decay window: k doubles, capped at K_MAX.
+      - Otherwise: k is unchanged.
+
+    Parameters
+    ----------
+    k : float
+        Current momentum decay parameter from the previous minute.
+    coverage : float
+        Current FCD value (number of vehicles observed).
+    current_minutes_no_low : float
+        Consecutive minutes with FCD in {0, 1} up to the current minute.
+        A value of 0 means an event (2+ vehicles) was detected this minute.
+    previous_minutes_no_low : float
+        Consecutive minutes with FCD in {0, 1} up to the previous minute.
+    decay_window : float
+        Time window within which a previous event is considered recent.
+
+    Returns
+    -------
+    float
+        Updated k value.
+    """
+    if coverage == 0:
+        return K_START
+    if current_minutes_no_low == 0 and previous_minutes_no_low <= decay_window:
+        return min(K_MAX, k * 2)
+    return k
+
+
+def apply_momentum(
+    coverage: float,
+    coverage_profile_value: float,
+    current_minutes_no_low: float,
+    previous_minutes_no_low: float,
+    profile_cov_ones: float,
+    k: float,
+    running_mean: float,
+) -> tuple[float, float]:
+    """
+    Apply momentum scaling to the running mean during low coverage periods.
+
+    During low coverage periods, a decaying momentum factor (alpha) is applied to
+    accelerate reopening detection when vehicles are observed. The decay parameter k
+    is boosted when multiple vehicle events occur within the decay window, causing
+    faster reduction of the closure probability.
+
+    Momentum is only applied when:
+      - coverage is below COV_HIGH (low coverage condition), and
+      - the drop from the historical mean is not a sudden drop.
+
+    Parameters
+    ----------
+    coverage : float
+        Current FCD value (number of vehicles observed).
+    coverage_profile_value : float
+        Historical mean/median FCD for the current time slot.
+    current_minutes_no_low : float
+        Consecutive minutes with FCD in {0, 1} up to the current minute.
+    previous_minutes_no_low : float
+        Consecutive minutes with FCD in {0, 1} up to the previous minute.
+    profile_cov_ones : float
+        Q95 of max consecutive low-coverage minutes from the profile. Used to
+        determine the decay window. NaN and values below MINIMUM_PROFILE_VALUE
+        are clamped to MINIMUM_PROFILE_VALUE.
+    k : float
+        Current momentum decay parameter carried over from the previous minute.
+    running_mean : float
+        Running mean value to scale.
+
+    Returns
+    -------
+    tuple[float, float]
+        Updated (running_mean, k). If momentum conditions are not met, both
+        values are returned unchanged.
+    """
+    is_low_coverage = coverage < COV_HIGH
+    is_not_sudden_drop = (coverage_profile_value - coverage) <= COV_DROP_LIMIT
+
+    if not (is_low_coverage and is_not_sudden_drop):
+        return running_mean, k
+
+    if np.isnan(profile_cov_ones) or profile_cov_ones < MINIMUM_PROFILE_VALUE:
+        profile_cov_ones = float(MINIMUM_PROFILE_VALUE)
+
+    decay_window = DECAY_PARAM * profile_cov_ones
+
+    k = update_k(k, coverage, current_minutes_no_low, previous_minutes_no_low, decay_window)
+
+    echo = 0.0
+    if decay_window > 0:
+        echo = max(0.0, (decay_window - current_minutes_no_low) / decay_window)
+
+    alpha = math.exp(-k * echo)
+    return running_mean * alpha, k
+
+
 def determine_road_status_by_minute(df_matched_profile: pd.DataFrame) -> pd.DataFrame:
     """
     Determines the road status per minute using a running mean based on profile coverage.
+
+    After the base running mean is computed, momentum scaling is applied via
+    apply_momentum to accelerate reopening detection during low coverage periods.
 
     Parameters
     ----------
@@ -294,6 +410,7 @@ def determine_road_status_by_minute(df_matched_profile: pd.DataFrame) -> pd.Data
         Updated DataFrame with running mean and SEGMENT_CLOSURE_STATUS.
     """
     prev_running_mean = 0.5
+    k = K_START
     running_means = []
     previous_row = None
 
@@ -321,6 +438,16 @@ def determine_road_status_by_minute(df_matched_profile: pd.DataFrame) -> pd.Data
             coverage_profile_value,
         )
 
+        prev_running_mean, k = apply_momentum(
+            coverage,
+            coverage_profile_value,
+            row.consecutive_low,
+            previous_row.consecutive_low,
+            previous_row.max_consecutive_zeros_or_ones_q95,
+            k,
+            prev_running_mean,
+        )
+
         running_means.append(prev_running_mean)
         previous_row = row.copy()
 
@@ -344,7 +471,7 @@ def set_segment_closure_status(df: pd.DataFrame) -> pd.DataFrame:
         Updated DataFrame with SEGMENT_CLOSURE_STATUS.
     """
     conditions = [
-        df.running_mean < OPEN_LIMT,
+        df.running_mean < OPEN_LIMIT,
         df.running_mean > CLOSED_LIMIT,
     ]
     selections = ["open", "closed"]
