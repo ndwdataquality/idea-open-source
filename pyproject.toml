@@ -1,12 +1,10 @@
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
+[project]
 name = "idea"
-version = "0.0.1"
+version = "0.0.2"
 description = "Shared IDEA Library"
-authors = ["Nationaal Dataportaal Wegverkeer Datakwaliteit (NDW)"]
+authors = [
+    {name = "Nationaal Dataportaal Wegverkeer Datakwaliteit (NDW)"}
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -15,17 +13,21 @@ classifiers = [
     "Programming Language :: Python :: 3.12"
 ]
 readme = "README.md"
+requires-python = ">=3.12.1"
+dependencies = [
+    "pandas==3.0.1",
+    "singleton-decorator==1.0.0",
+    "plotly==6.5.2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12.1"
-"pandas" = "2.2.3"
-"pytest" = "8.3.5"
-"pytest-timeout" = "2.3.1"
-"pytest-cov" = "6.1.0"
-"parameterized" = "0.9.0"
-"singleton-decorator" = "1.0.0"
-"pre-commit" = "4.2.0"
-"plotly" = "6.0.1"
+[dependency-groups]
+dev = [
+    "pytest==9.0.2",
+    "pytest-timeout==2.4.0",
+    "pytest-cov==7.0.0",
+    "parameterized==0.9.0",
+    "pre-commit==4.5.1",
+]
 
 [tool.ruff]
 src = ["idea"]
