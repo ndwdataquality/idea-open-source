@@ -52,7 +52,8 @@ class TestCoverageFunctions(unittest.TestCase):
 
     def test_calculate_minutes_no_coverage(self):
         df = pd.DataFrame(
-            {"fcd": [0, 0, 1, 2, np.nan, 0]}, index=pd.date_range("2024-01-01", periods=6, freq="T")
+            {"fcd": [0, 0, 1, 2, np.nan, 0]}, index=pd.date_range("2024-01-01", periods=6,
+                                                                  freq="min")
         )
         result = calculate_minutes_no_coverage(df)
         self.assertListEqual(result["consecutive_zeros"].tolist(), [1, 2, 0, 0, 0, 1])
