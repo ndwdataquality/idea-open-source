@@ -31,26 +31,14 @@ examples/
 
 ## ⚙️ Installation
 
-This project uses [Poetry](https://python-poetry.org/) for dependency management and virtual environments.
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management and virtual environments.
 
-### Step 1: Install Poetry with pipx
+### Step 1: Install uv
 
-Install poetry with pipx .  If you do not have pipx install using instructions from [pipx](https://pipxproject.github.io/pipx/installation/)
-
-> You might need to restart terminal/IDE after installation ( in windows that is needed to be able to find the executable)
-
-> Alternative way of installing see here [poetry](https://python-poetry.org/docs/), but pipx is recommended so we do it in the same way in the team, in the pipeline it is installed using pipx as well and in dockerfiles.
+Install uv using the official installer:
 
 ```bash
-pipx install poetry==2.1.2
-```
-
-> use same version in pipeline, setting no version should install latest version.
-
-Configure poetry to create a virtual environment in the project folder under .venv, otherwise it will be installed in the user folder with the project name .
-
-```bash
-poetry config virtualenvs.in-project true  
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 ### Step 2: Set up the project
@@ -61,9 +49,11 @@ Clone the repository and install the dependencies:
 git clone idea-open-source.git
 cd idea-open-source
 ```
-Install the Poetry environment:
+
+Install the environment (including dev dependencies):
+
 ```bash
-poetry install
+uv sync --dev
 ```
 ---
 ## 🧠 Functionality
@@ -91,7 +81,7 @@ The core function `validate_roadwork` resides in `idea/validation/`. It takes th
 Running tests
 
 ```bash
-poetry run pytest
+uv run pytest
 ```
 
 ---
